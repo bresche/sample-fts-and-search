@@ -73,10 +73,11 @@ public class ExtFtsServiceBean extends FtsServiceBean {
             Set<String> termsFoundedInGraph = findSearchTermsInEntitiesGraph(terms, entitiesGraph);
             if (termsFoundedInGraph.containsAll(terms)) {
                 EntityInfo mainEntityInfo = entitiesGraph.getMainEntityInfo();
-                searchResult.addHit(mainEntityInfo.getId(), mainEntityInfo.getText(), null, new MorphologyNormalizer());
-                //we don't reload entity because we don't need entity caption
                 SearchResult.Entry searchResultEntry = new SearchResult.Entry(mainEntityInfo.getId(), mainEntityInfo.getId().toString());
                 searchResult.addEntry(mainEntityInfo.getName(), searchResultEntry);
+
+                //no hints, saying what fields contain search terms, are displayed at the moment. It requires some
+                //additional investigation
             }
         }
 
