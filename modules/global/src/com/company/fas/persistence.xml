@@ -6,5 +6,6 @@
         <class>com.company.fas.entity.Customer</class>
         <class>com.company.fas.entity.Category</class>
         <class>com.company.fas.entity.Order</class>
+        <class>com.company.fas.entity.CustomerDetails</class>
     </persistence-unit>
 </persistence>

@@ -2,6 +2,7 @@ package com.company.fas.core;
 
 import com.haulmont.fts.core.app.FtsServiceBean;
 import com.haulmont.fts.core.sys.EntityInfo;
+import com.haulmont.fts.core.sys.LuceneSearcherAPI;
 import com.haulmont.fts.core.sys.morphology.MorphologyNormalizer;
 import com.haulmont.fts.global.SearchResult;
 
@@ -23,9 +24,7 @@ public class ExtFtsServiceBean extends FtsServiceBean {
 
     @Override
     public SearchResult search(String searchTerm, List<String> entityNames) {
-        if (searcher != null && !searcher.isCurrent())
-            searcher = null;
-
+        LuceneSearcherAPI searcher = this.getSearcher();
         Map<UUID, EntitiesGraph> entitiesGraphsMap = new HashMap<>();
 
         //first search among entities with names from entityNames method parameter. The search is performed with the OR
@@ -35,6 +34,7 @@ public class ExtFtsServiceBean extends FtsServiceBean {
         SearchResult searchResult = new SearchResult(searchTerm);
         for (EntityInfo entityInfo : allFieldResults) {
             EntitiesGraph entitiesGraph = entitiesGraphsMap.get(entityInfo.getId());
+            searchResult.addHit(entityInfo.getId(), entityInfo.getText(), null, new MorphologyNormalizer());
             if (entitiesGraph == null) {
                 entitiesGraph = new EntitiesGraph(entityInfo);
                 entitiesGraphsMap.put((UUID) entityInfo.getId(), entitiesGraph);
@@ -51,9 +51,15 @@ public class ExtFtsServiceBean extends FtsServiceBean {
 
         List<EntityInfo> linkedEntitiesInfos = getSearcher().searchAllField(searchTerm, linkedEntitiesNames);
         for (EntityInfo linkedEntitiesInfo : linkedEntitiesInfos) {
-            List<EntityInfo> entitiesWithLinkInfos = getSearcher().searchLinksField(linkedEntitiesInfo.getId(), entityNames);
+            List<EntityInfo> entitiesWithLinkInfos = getSearcher().searchLinksField(linkedEntitiesInfo.toString(), entityNames);
+            //for backward compatibility. Previously "links" field of the Lucene document contained a set of linked entities ids.
+            //Now a set of {@link EntityInfo} objects is stored there. We need to make a second search to find entities,
+            //that were indexed before this modification.
+            entitiesWithLinkInfos.addAll(searcher.searchLinksField(linkedEntitiesInfo.getId(), entityNames));
             for (EntityInfo entityWithLinkInfo : entitiesWithLinkInfos) {
                 EntitiesGraph entitiesGraph = entitiesGraphsMap.get((UUID) entityWithLinkInfo.getId());
+                searchResult.addHit(entityWithLinkInfo.getId(), linkedEntitiesInfo.getText(), linkedEntitiesInfo.getName(),
+                        new MorphologyNormalizer());
                 //EntityGraph may be not created by this moment. It may happen if main entity contains none of the
                 //search terms (all of them may be in related entities).
                 if (entitiesGraph == null) {
@@ -67,7 +73,11 @@ public class ExtFtsServiceBean extends FtsServiceBean {
         //the last step is to find entity graphs that contain all the search terms in any of their entities. Search terms
         //may be spread out among entities in graph, for example 'searchTerm1' may be in the main entity, but 'searchTerm2'
         //is in one of related entities.
-        List<String> terms = Arrays.asList(searchTerm.split("\\s+"));
+        List<String> terms = Arrays.asList(searchTerm.split("\\s+"))
+                .stream()
+                .map(term -> term.replace("*", ".*") + ".*")
+                .collect(Collectors.toList());
+
         for (Map.Entry<UUID, EntitiesGraph> entry : entitiesGraphsMap.entrySet()) {
             EntitiesGraph entitiesGraph = entry.getValue();
             Set<String> termsFoundedInGraph = findSearchTermsInEntitiesGraph(terms, entitiesGraph);
@@ -118,11 +128,11 @@ public class ExtFtsServiceBean extends FtsServiceBean {
     }
 
     /**
-     * Method returns true if any of the words in propertyValue starts with the term
+     * Method returns true if any of the words in propertyValue matches with the term
      */
     private boolean isPropertyValueMatchesTerm(String propertyValue, String term) {
         for (String propertyValueWord : propertyValue.split("\\s+")) {
-            if (propertyValueWord.toLowerCase().startsWith(term))
+            if (propertyValueWord.toLowerCase().matches(term))
                 return true;
         }
         return false;

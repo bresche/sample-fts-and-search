@@ -10,6 +10,7 @@ create table FAS_CUSTOMER (
     DELETED_BY varchar(50),
     --
     NAME varchar(255),
+    DETAILS_ID varchar(36),
     ADDRESS varchar(255),
     --
     primary key (ID)
@@ -50,3 +51,19 @@ create table FAS_ORDER (
     primary key (ID)
 )^
 -- end FAS_ORDER
+-- begin FAS_CUSTOMER_DETAILS
+create table FAS_CUSTOMER_DETAILS (
+    ID varchar(36) not null,
+    VERSION integer not null,
+    CREATE_TS timestamp,
+    CREATED_BY varchar(50),
+    UPDATE_TS timestamp,
+    UPDATED_BY varchar(50),
+    DELETE_TS timestamp,
+    DELETED_BY varchar(50),
+    --
+    NICKNAME varchar(255),
+    --
+    primary key (ID)
+)^
+-- end FAS_CUSTOMER_DETAILS

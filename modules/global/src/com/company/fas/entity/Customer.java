@@ -1,10 +1,12 @@
 package com.company.fas.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Column;
-import com.haulmont.cuba.core.entity.StandardEntity;
+import com.haulmont.chile.core.annotations.Composition;
 import com.haulmont.chile.core.annotations.NamePattern;
+import com.haulmont.cuba.core.entity.StandardEntity;
+import com.haulmont.cuba.core.entity.annotation.OnDelete;
+import com.haulmont.cuba.core.global.DeletePolicy;
+
+import javax.persistence.*;
 
 @NamePattern("%s|name")
 @Table(name = "FAS_CUSTOMER")
@@ -15,8 +17,24 @@ public class Customer extends StandardEntity {
     @Column(name = "NAME")
     protected String name;
 
+    @Composition
+    @OnDelete(DeletePolicy.CASCADE)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "DETAILS_ID")
+    protected CustomerDetails details;
+
     @Column(name = "ADDRESS")
     protected String address;
+
+
+    public void setDetails(CustomerDetails details) {
+        this.details = details;
+    }
+
+    public CustomerDetails getDetails() {
+        return details;
+    }
+
 
     public void setName(String name) {
         this.name = name;

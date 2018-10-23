@@ -8,4 +8,14 @@
         <property name="category"
                   view="_minimal"/>
     </view>
+    <view class="com.company.fas.entity.CustomerDetails"
+          extends="_local"
+          name="customerDetails-view">
+    </view>
+    <view class="com.company.fas.entity.Customer"
+          extends="_local"
+          name="customer-view">
+        <property name="details"
+                  view="_minimal"/>
+    </view>
 </views>

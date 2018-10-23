@@ -10,5 +10,8 @@
         <entity class="com.company.fas.entity.Order">
             <include re=".*"/>
         </entity>
+        <entity class="com.company.fas.entity.CustomerDetails">
+            <include re=".*"/>
+        </entity>
     </entities>
 </fts-config>
